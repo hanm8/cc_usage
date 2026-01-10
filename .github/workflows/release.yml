@@ -36,11 +36,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-swift-
 
-      - name: Build Release Binary
+      - name: Build ARM64 Binary
         run: |
-          echo "Building universal binary for macOS..."
-          swift build -c release --arch arm64 --arch x86_64
-          file .build/release/ClaudeUsage
+          echo "Building ARM64 binary for Apple Silicon..."
+          swift build -c release --arch arm64
+          mkdir -p .build/release-arm64
+          cp .build/release/ClaudeUsage .build/release-arm64/ClaudeUsage
+          file .build/release-arm64/ClaudeUsage
+
+      - name: Build Intel Binary
+        run: |
+          echo "Building x86_64 binary for Intel..."
+          swift build -c release --arch x86_64
+          mkdir -p .build/release-intel
+          cp .build/release/ClaudeUsage .build/release-intel/ClaudeUsage
+          file .build/release-intel/ClaudeUsage
 
       - name: Make Scripts Executable
         run: chmod +x scripts/*.sh
