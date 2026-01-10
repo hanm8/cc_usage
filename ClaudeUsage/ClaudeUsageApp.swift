@@ -156,8 +156,9 @@ class UsageViewModel: ObservableObject {
     private func startRefreshTimer() {
         refreshTimer?.invalidate()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            guard let self else { return }
             Task { @MainActor in
-                await self?.refresh()
+                await self.refresh()
             }
         }
     }
