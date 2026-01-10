@@ -51,4 +51,12 @@ jobs:
             **Intel:** `ClaudeUsage-intel.dmg`
 
             Not sure? Click  → About This Mac → look for "Chip" or "Processor"
+
+            ## First Launch
+
+            After installing, run this command (app is unsigned):
+            ```
+            xattr -cr /Applications/ClaudeUsage.app
+            ```
+            Then open from Applications folder.
           generate_release_notes: true

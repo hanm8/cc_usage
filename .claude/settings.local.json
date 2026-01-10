@@ -10,7 +10,8 @@
       "Bash(./scripts/create-release-assets.sh:*)",
       "Bash(lipo -info:*)",
       "Bash(./scripts/create-app-bundle-arch.sh:*)",
-      "Bash(./scripts/create-dmg-arch.sh:*)"
+      "Bash(./scripts/create-dmg-arch.sh:*)",
+      "Bash(git tag:*)"
     ]
   }
 }
