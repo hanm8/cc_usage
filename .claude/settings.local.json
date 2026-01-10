@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swift build:*)",
+      "Bash(./scripts/create-app-bundle.sh:*)",
+      "Bash(./scripts/create-dmg.sh:*)",
+      "Bash(security find-generic-password -s \"Claude Code-credentials\" -w)",
+      "Bash(./scripts/create-icns.sh:*)",
+      "Bash(open build/ClaudeUsage.app)",
+      "Bash(./scripts/create-release-assets.sh:*)"
+    ]
+  }
+}
