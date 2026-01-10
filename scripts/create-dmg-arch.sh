@@ -1,0 +1,82 @@
+#!/bin/bash
+
+set -e
+
+ARCH="${1:-arm64}"  # arm64 or intel
+APP_NAME="ClaudeUsage"
+BUILD_DIR="build-${ARCH}"
+DMG_NAME="$APP_NAME-${ARCH}.dmg"
+VOLUME_NAME="$APP_NAME Installer ($ARCH)"
+APP_PATH="$BUILD_DIR/$APP_NAME.app"
+DMG_PATH="$BUILD_DIR/$DMG_NAME"
+TEMP_DMG="$BUILD_DIR/temp.dmg"
+
+# Map architecture names
+if [[ "$ARCH" == "intel" ]]; then
+    ARCH_DISPLAY="Intel"
+elif [[ "$ARCH" == "arm64" ]]; then
+    ARCH_DISPLAY="Apple Silicon"
+else
+    echo "❌ Invalid architecture: $ARCH (use 'arm64' or 'intel')"
+    exit 1
+fi
+
+# Check if app bundle exists
+if [ ! -d "$APP_PATH" ]; then
+    echo "❌ Error: App bundle not found at $APP_PATH"
+    exit 1
+fi
+
+echo "Creating DMG installer for $ARCH_DISPLAY..."
+
+# Remove old DMG if exists
+rm -f "$DMG_PATH" "$TEMP_DMG"
+
+# Create temporary DMG
+hdiutil create -size 100m -fs HFS+ -volname "$VOLUME_NAME" "$TEMP_DMG"
+
+# Mount the DMG
+MOUNT_OUTPUT=$(hdiutil attach "$TEMP_DMG" -nobrowse)
+MOUNT_DIR=$(echo "$MOUNT_OUTPUT" | grep Volumes | sed 's/.*\/Volumes/\/Volumes/' | tr -d '\t')
+
+# Copy app to DMG
+echo "Copying app to DMG..."
+cp -R "$APP_PATH" "$MOUNT_DIR/"
+
+# Create Applications symlink
+echo "Creating Applications symlink..."
+ln -s /Applications "$MOUNT_DIR/Applications"
+
+# Create a README
+cat > "$MOUNT_DIR/README.txt" <<EOF
+Claude Usage Monitor ($ARCH_DISPLAY)
+====================================
+
+Installation:
+1. Drag $APP_NAME.app to the Applications folder
+2. Open $APP_NAME from Applications
+3. The app will appear in your menu bar
+
+Architecture: $ARCH_DISPLAY
+Requirements: macOS 13.0 or later
+Claude Code CLI: Required (run: claude login)
+
+Support:
+https://github.com/yourusername/cc_usage
+EOF
+
+# Unmount
+echo "Finalizing DMG..."
+hdiutil detach "$MOUNT_DIR"
+
+# Convert to compressed DMG
+hdiutil convert "$TEMP_DMG" -format UDZO -o "$DMG_PATH"
+
+# Clean up
+rm -f "$TEMP_DMG"
+
+echo "✅ DMG created successfully at $DMG_PATH"
+
+# Show DMG size
+SIZE=$(du -h "$DMG_PATH" | cut -f1)
+echo "📦 DMG size: $SIZE"
