@@ -1,185 +1,54 @@
-name: Release Build
+name: Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag (e.g., v1.0.0)'
-        required: false
-        type: string
+    tags: ['v*']
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build and Release
-    runs-on: macos-14  # macOS Sonoma with Apple Silicon
-
+  release:
+    runs-on: macos-14
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-
-      - name: Cache Swift Build
-        uses: actions/cache@v4
-        with:
-          path: .build
-          key: ${{ runner.os }}-swift-${{ hashFiles('Package.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-swift-
-
-      - name: Build ARM64 Binary
+      - name: Build
         run: |
-          echo "Building ARM64 binary for Apple Silicon..."
           swift build -c release --arch arm64
-          mkdir -p .build/release-arm64
-          cp .build/release/ClaudeUsage .build/release-arm64/ClaudeUsage
-          file .build/release-arm64/ClaudeUsage
-
-      - name: Build Intel Binary
-        run: |
-          echo "Building x86_64 binary for Intel..."
+          mkdir -p .build/release-arm64 && cp .build/release/ClaudeUsage .build/release-arm64/
           swift build -c release --arch x86_64
-          mkdir -p .build/release-intel
-          cp .build/release/ClaudeUsage .build/release-intel/ClaudeUsage
-          file .build/release-intel/ClaudeUsage
+          mkdir -p .build/release-intel && cp .build/release/ClaudeUsage .build/release-intel/
 
-      - name: Make Scripts Executable
-        run: chmod +x scripts/*.sh
-
-      - name: Create App Icon
+      - name: Package
         run: |
+          chmod +x scripts/*.sh
           ./scripts/create-icns.sh
-          ls -lh build/AppIcon.icns
+          ./scripts/create-app-bundle-arch.sh arm64
+          ./scripts/create-app-bundle-arch.sh intel
+          ./scripts/create-dmg-arch.sh arm64
+          ./scripts/create-dmg-arch.sh intel
 
-      - name: Create App Bundle
+      - name: Checksums
         run: |
-          ./scripts/create-app-bundle.sh
-          ls -lh build/ClaudeUsage.app/Contents/Resources/
+          cd build-arm64 && shasum -a 256 *.dmg *.zip > checksums-arm64.txt && cd ..
+          cd build-intel && shasum -a 256 *.dmg *.zip > checksums-intel.txt && cd ..
 
-      - name: Verify App Bundle
-        run: |
-          echo "Verifying app bundle structure..."
-          ls -la build/ClaudeUsage.app/Contents/
-          ls -la build/ClaudeUsage.app/Contents/MacOS/
-          ls -la build/ClaudeUsage.app/Contents/Resources/
-          file build/ClaudeUsage.app/Contents/MacOS/ClaudeUsage
-          plutil -lint build/ClaudeUsage.app/Contents/Info.plist
-
-      - name: Create DMG
-        run: |
-          ./scripts/create-dmg.sh
-          ls -lh build/ClaudeUsage.dmg
-
-      - name: Get Version
-        id: version
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/}
-          elif [[ -n "${{ inputs.version }}" ]]; then
-            VERSION="${{ inputs.version }}"
-          else
-            VERSION="dev-$(git rev-parse --short HEAD)"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
-
-      - name: Calculate Checksums
-        run: |
-          cd build
-          shasum -a 256 ClaudeUsage.dmg > ClaudeUsage.dmg.sha256
-          shasum -a 256 ClaudeUsage.app.zip > ClaudeUsage.app.zip.sha256
-          cat *.sha256
-
-      - name: Create Release Assets
-        run: |
-          ./scripts/create-release-assets.sh ${{ steps.version.outputs.version }}
-          ls -la build/release-${{ steps.version.outputs.version }}/
-
-      - name: Create Release Notes
-        id: release_notes
-        run: |
-          cat > release_notes.md <<EOF
-          ## ClaudeUsage ${{ steps.version.outputs.version }}
-
-          ### Installation
-
-          **Via DMG (Recommended):**
-          1. Download \`ClaudeUsage.dmg\`
-          2. Open the DMG and drag ClaudeUsage.app to Applications
-          3. Launch from Applications folder
-
-          **Via ZIP:**
-          1. Download \`ClaudeUsage.app.zip\`
-          2. Extract and move to Applications
-          3. Right-click → Open (first time only)
-
-          ### Requirements
-          - macOS 13.0 or later
-          - Claude Code CLI (\`claude login\`)
-
-          ### Features
-          - Real-time Claude usage monitoring
-          - 5-hour and 7-day limit tracking
-          - Menu bar integration
-          - Auto-refresh every 30 seconds
-          - Full VoiceOver accessibility
-
-          ### Checksums
-          \`\`\`
-          $(cat build/*.sha256)
-          \`\`\`
-
-          ### Build Info
-          - Architecture: Universal (Intel + Apple Silicon)
-          - Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-          - Swift Version: $(swift --version | head -1)
-          EOF
-          echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
+      - name: Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            build/release-${{ steps.version.outputs.version }}/ClaudeUsage.dmg
-            build/release-${{ steps.version.outputs.version }}/ClaudeUsage.app.zip
-            build/release-${{ steps.version.outputs.version }}/*.sha256
-            build/release-${{ steps.version.outputs.version }}/INSTALL.txt
-            build/release-${{ steps.version.outputs.version }}/README.txt
-            build/release-${{ steps.version.outputs.version }}/CHANGELOG.txt
-            build/release-${{ steps.version.outputs.version }}/MANIFEST.txt
-          body_path: release_notes.md
-          draft: false
-          prerelease: ${{ contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}
+            build-arm64/ClaudeUsage-arm64.dmg
+            build-arm64/ClaudeUsage-arm64.app.zip
+            build-arm64/checksums-arm64.txt
+            build-intel/ClaudeUsage-intel.dmg
+            build-intel/ClaudeUsage-intel.app.zip
+            build-intel/checksums-intel.txt
+          body: |
+            ## Download
+
+            **Apple Silicon (M1/M2/M3/M4):** `ClaudeUsage-arm64.dmg`
+            **Intel:** `ClaudeUsage-intel.dmg`
+
+            Not sure? Click  → About This Mac → look for "Chip" or "Processor"
           generate_release_notes: true
-          name: ClaudeUsage ${{ steps.version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ClaudeUsage-${{ steps.version.outputs.version }}
-          path: |
-            build/ClaudeUsage.dmg
-            build/ClaudeUsage.app.zip
-            build/*.sha256
-            build/AppIcon.icns
-          retention-days: 30
-          compression-level: 9
-
-      - name: Upload App Bundle for Testing
-        uses: actions/upload-artifact@v4
-        with:
-          name: ClaudeUsage.app-${{ steps.version.outputs.version }}
-          path: build/ClaudeUsage.app
-          retention-days: 7

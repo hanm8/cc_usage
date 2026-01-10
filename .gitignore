@@ -1,6 +1,8 @@
 .DS_Store
 .build/
 build/
+build-arm64/
+build-intel/
 *.swiftmodule
 *.swiftdoc
 *.swiftpm/

@@ -7,19 +7,23 @@ Native Swift menu bar app showing Claude Code 5-hour and 7-day limits in real-ti
 ### Download Release (Recommended)
 
 1. Go to [Releases](https://github.com/yourusername/cc_usage/releases/latest)
-2. Download **ClaudeUsage.dmg** (also grab `INSTALL.txt` for detailed instructions)
+2. **Choose your architecture:**
+   - **Apple Silicon** (M1/M2/M3/M4): Download `ClaudeUsage-arm64.dmg`
+   - **Intel**: Download `ClaudeUsage-intel.dmg`
 3. Open the DMG and drag **ClaudeUsage.app** to Applications
 4. Launch from Applications folder (right-click → Open first time)
 5. The app will appear in your menu bar
 
+**Not sure which version?** Click  → About This Mac:
+- "Chip: Apple M1/M2/M3/M4" = Download ARM64
+- "Processor: Intel" = Download Intel
+
 **Each release includes:**
-- `ClaudeUsage.dmg` - DMG installer
-- `ClaudeUsage.app.zip` - ZIP archive
+- `ClaudeUsage-arm64.dmg` - ARM64 DMG installer (Apple Silicon)
+- `ClaudeUsage-arm64.app.zip` - ARM64 ZIP archive
+- `ClaudeUsage-intel.dmg` - Intel DMG installer (x86_64)
+- `ClaudeUsage-intel.app.zip` - Intel ZIP archive
 - `*.sha256` - Checksums for verification
-- `INSTALL.txt` - Detailed installation guide
-- `README.txt` - App overview
-- `CHANGELOG.txt` - Version notes
-- `MANIFEST.txt` - Complete file listing
 
 ### Build from Source
 
@@ -51,14 +55,12 @@ swift build -c release
 ### Building
 
 ```bash
-# Debug build
-swift build
-
-# Release build
+# Release build (current architecture)
 swift build -c release
 
-# Universal binary (Intel + Apple Silicon)
-swift build -c release --arch arm64 --arch x86_64
+# Build for specific architecture
+swift build -c release --arch arm64   # Apple Silicon
+swift build -c release --arch x86_64  # Intel
 ```
 
 ### Running
@@ -76,17 +78,24 @@ swift build -c release --arch arm64 --arch x86_64
 #### Manual Build
 
 ```bash
-# Build app bundle
-./scripts/create-app-bundle.sh
+# Build for ARM64 (Apple Silicon)
+swift build -c release --arch arm64
+mkdir -p .build/release-arm64
+cp .build/release/ClaudeUsage .build/release-arm64/
+./scripts/create-app-bundle-arch.sh arm64
+./scripts/create-dmg-arch.sh arm64
 
-# Create DMG installer
-./scripts/create-dmg.sh
+# Build for Intel (x86_64)
+swift build -c release --arch x86_64
+mkdir -p .build/release-intel
+cp .build/release/ClaudeUsage .build/release-intel/
+./scripts/create-app-bundle-arch.sh intel
+./scripts/create-dmg-arch.sh intel
 ```
 
-The outputs will be in the `build/` directory:
-- `ClaudeUsage.app` - Application bundle
-- `ClaudeUsage.app.zip` - ZIP archive
-- `ClaudeUsage.dmg` - DMG installer
+The outputs will be in architecture-specific directories:
+- `build-arm64/` - ARM64 app bundle, ZIP, and DMG
+- `build-intel/` - Intel app bundle, ZIP, and DMG
 
 #### Automated Release (GitHub Actions)
 
@@ -97,10 +106,10 @@ The outputs will be in the `build/` directory:
    ```
 
 2. GitHub Actions will automatically:
-   - Build universal binary (Intel + Apple Silicon)
-   - Create app bundle
-   - Generate DMG installer
-   - Create GitHub release with artifacts
+   - Build separate ARM64 and Intel binaries
+   - Create architecture-specific app bundles
+   - Generate DMG installers for each architecture
+   - Create GitHub release with all artifacts
 
 ## Architecture
 

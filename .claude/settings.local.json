@@ -7,7 +7,10 @@
       "Bash(security find-generic-password -s \"Claude Code-credentials\" -w)",
       "Bash(./scripts/create-icns.sh:*)",
       "Bash(open build/ClaudeUsage.app)",
-      "Bash(./scripts/create-release-assets.sh:*)"
+      "Bash(./scripts/create-release-assets.sh:*)",
+      "Bash(lipo -info:*)",
+      "Bash(./scripts/create-app-bundle-arch.sh:*)",
+      "Bash(./scripts/create-dmg-arch.sh:*)"
     ]
   }
 }

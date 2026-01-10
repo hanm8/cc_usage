@@ -211,7 +211,31 @@ struct UsageCard: View {
     let resetsAt: String?
     let color: Color
 
-    private static let dateFormatter = ISO8601DateFormatter()
+    private static let isoFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let isoFormatterNoFraction: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    private static let dateTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
+    }()
 
     var progressColor: Color {
         if utilization >= 90 { return .red }
@@ -219,18 +243,44 @@ struct UsageCard: View {
         return color
     }
 
-    var resetTimeString: String {
-        guard let resetsAt = resetsAt else { return "N/A" }
-        guard let resetDate = Self.dateFormatter.date(from: resetsAt) else { return "Unknown" }
-        
+    private func parseDate(_ dateString: String) -> Date? {
+        // Try with fractional seconds first, then without
+        return Self.isoFormatter.date(from: dateString)
+            ?? Self.isoFormatterNoFraction.date(from: dateString)
+    }
+
+    var resetInfo: (text: String, showPrefix: Bool) {
+        guard let resetsAt = resetsAt else { return ("N/A", false) }
+        guard let resetDate = parseDate(resetsAt) else {
+            // If parsing fails, show raw string truncated
+            return ("at \(String(resetsAt.prefix(19)))", true)
+        }
+
         let diff = resetDate.timeIntervalSinceNow
-        if diff <= 0 { return "Resetting..." }
-        
-        let hours = Int(diff) / 3600
+        if diff <= 0 { return ("Resetting now...", false) }
+
+        let days = Int(diff) / 86400
+        let hours = (Int(diff) % 86400) / 3600
         let minutes = (Int(diff) % 3600) / 60
-        
-        if hours > 0 { return "\(hours)h \(minutes)m" }
-        return "\(minutes)m"
+
+        // Show relative time + absolute time
+        let absoluteTime: String
+        if diff > 86400 { // More than 24 hours
+            absoluteTime = Self.dateTimeFormatter.string(from: resetDate)
+        } else {
+            absoluteTime = Self.timeFormatter.string(from: resetDate)
+        }
+
+        let relativeTime: String
+        if days > 0 {
+            relativeTime = "\(days)d \(hours)h"
+        } else if hours > 0 {
+            relativeTime = "\(hours)h \(minutes)m"
+        } else {
+            relativeTime = "\(minutes)m"
+        }
+
+        return ("\(relativeTime) (at \(absoluteTime))", true)
     }
     
     var body: some View {
@@ -272,7 +322,7 @@ struct UsageCard: View {
             .frame(height: 8)
             
             HStack {
-                Text("\(resetTimeString) remaining")
+                Text(resetInfo.showPrefix ? "Resets in \(resetInfo.text)" : resetInfo.text)
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
