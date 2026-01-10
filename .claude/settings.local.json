@@ -11,7 +11,8 @@
       "Bash(lipo -info:*)",
       "Bash(./scripts/create-app-bundle-arch.sh:*)",
       "Bash(./scripts/create-dmg-arch.sh:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "WebFetch(domain:gist.github.com)"
     ]
   }
 }
