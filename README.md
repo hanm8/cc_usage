@@ -12,12 +12,7 @@ macOS menu bar app showing Claude Code usage limits in real-time.
 
 2. Open DMG and drag to Applications
 
-3. First launch (app is ad-hoc signed):
-   ```bash
-   xattr -cr /Applications/ClaudeUsage.app
-   ```
-
-4. Open from Applications
+3. Open from Applications
 
 > **Which version?**  → About This Mac → "Chip: M1/M2/M3/M4" = ARM64, "Processor: Intel" = Intel
 
