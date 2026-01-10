@@ -99,6 +99,10 @@ EOF
 # Create PkgInfo
 echo "APPL????" > "$CONTENTS_DIR/PkgInfo"
 
+# Ad-hoc code sign (helps prevent "damaged app" errors)
+echo "Ad-hoc signing app bundle..."
+codesign --force --deep --sign - "$APP_DIR"
+
 # Create ZIP archive
 echo "Creating ZIP archive..."
 cd "$BUILD_DIR"

@@ -6,13 +6,16 @@ Native Swift menu bar app showing Claude Code 5-hour and 7-day limits in real-ti
 
 ### Download Release (Recommended)
 
-1. Go to [Releases](https://github.com/yourusername/cc_usage/releases/latest)
+1. Go to [Releases](https://github.com/hanm8/cc_usage/releases/latest)
 2. **Choose your architecture:**
    - **Apple Silicon** (M1/M2/M3/M4): Download `ClaudeUsage-arm64.dmg`
    - **Intel**: Download `ClaudeUsage-intel.dmg`
 3. Open the DMG and drag **ClaudeUsage.app** to Applications
-4. Launch from Applications folder (right-click → Open first time)
-5. The app will appear in your menu bar
+4. **First launch** (app is unsigned, run once):
+   ```bash
+   xattr -cr /Applications/ClaudeUsage.app
+   ```
+5. Open from Applications - the app will appear in your menu bar
 
 **Not sure which version?** Click  → About This Mac:
 - "Chip: Apple M1/M2/M3/M4" = Download ARM64
