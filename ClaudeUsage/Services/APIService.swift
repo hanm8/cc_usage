@@ -5,7 +5,7 @@ actor APIService {
 
     private let baseURL = "https://api.anthropic.com"
     private let credentialService = CredentialService.shared
-    private let userAgent = "claude-code/2.0.37"
+    private let userAgent = "claude-code/2.1.7"
     private let maxRetries = 3
     private let retryDelay: UInt64 = 1_000_000_000 // 1 second in nanoseconds
 
@@ -233,15 +233,15 @@ enum APIError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noToken:
-            return "No credentials found. Run: claude login"
+            return "No credentials found. Start Claude to login"
         case .tokenExpired:
-            return "Session expired. Run: claude login"
+            return "Session expired. Start Claude to refresh"
         case .noRefreshToken:
-            return "No refresh token available. Run: claude login"
+            return "No refresh token. Start Claude to refresh"
         case .tokenRefreshFailed(let code):
-            return "Token refresh failed (\(code)). Run: claude login"
+            return "Token refresh failed (\(code)). Start Claude to refresh"
         case .credentialsCorrupted:
-            return "Credentials file corrupted. Run: claude login"
+            return "Credentials corrupted. Start Claude to login"
         case .invalidURL(let path):
             return "Invalid endpoint: \(path)"
         case .invalidResponse:

@@ -94,6 +94,19 @@ struct ContentView: View {
                         )
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("7-day limit: \(Int(usage.sevenDay?.utilization ?? 0)) percent used")
+
+                        // 7-Day Sonnet Limit
+                        if let sonnet = usage.sevenDaySonnet {
+                            UsageCard(
+                                title: "7-Day Sonnet",
+                                icon: "sparkles",
+                                utilization: sonnet.utilization,
+                                resetsAt: sonnet.resetsAt,
+                                color: .purple
+                            )
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("7-day Sonnet limit: \(Int(sonnet.utilization)) percent used")
+                        }
                     } else if viewModel.isLoading {
                         ProgressView()
                             .padding()
@@ -102,9 +115,9 @@ struct ContentView: View {
                     if let errorState = viewModel.errorState {
                         ErrorView(
                             errorState: errorState,
-                            onRetry: errorState.isRecoverable ? {
+                            onRetry: {
                                 Task { await viewModel.refresh() }
-                            } : nil
+                            }
                         )
                     }
                 }
@@ -185,7 +198,7 @@ struct ErrorView: View {
                 Button(action: retry) {
                     HStack {
                         Image(systemName: "arrow.clockwise")
-                        Text("Retry")
+                        Text(errorState.type == .authentication ? "Reload" : "Retry")
                     }
                     .font(.caption)
                     .padding(.horizontal, 12)

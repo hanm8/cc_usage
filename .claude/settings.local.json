@@ -12,7 +12,10 @@
       "Bash(./scripts/create-app-bundle-arch.sh:*)",
       "Bash(./scripts/create-dmg-arch.sh:*)",
       "Bash(git tag:*)",
-      "WebFetch(domain:gist.github.com)"
+      "WebFetch(domain:gist.github.com)",
+      "Bash(xcodebuild:*)",
+      "Bash(swiftc:*)",
+      "Bash(claude --version:*)"
     ]
   }
 }

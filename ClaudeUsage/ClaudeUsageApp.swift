@@ -115,7 +115,7 @@ class UsageViewModel: ObservableObject {
         case .noToken, .tokenExpired, .credentialsCorrupted:
             errorType = .authentication
             isRecoverable = false
-            actionHint = "Run: claude login"
+            actionHint = "Then click Reload"
         case .networkUnavailable:
             errorType = .network
             isRecoverable = true
